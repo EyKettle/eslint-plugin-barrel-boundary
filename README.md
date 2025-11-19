@@ -51,18 +51,17 @@ In your `eslint.config.js` (or `.mjs`), import the plugin and use the recommende
 import barrelBoundary from "eslint-plugin-barrel-boundary";
 
 export default [
-  // 1. Use the recommended configuration (Recommended)
-  barrelBoundary.configs.recommended,
+  // 1. Use the recommended configuration (this enables the plugin and the rule)
+  barrelBoundary.configs["flat/recommended"],
 
   // 2. Custom Configuration (Optional)
-  // If you need to customize options (e.g., support path aliases like "@/components")
-  // `detectAliases` defaults to `false`.
+  // You can override the rules in a subsequent object
   {
     rules: {
       "barrel-boundary/enforce-barrel-files": [
         "error",
         {
-          detectAliases: true,
+          detectAliases: true, // Support for path aliases (e.g., "@/components")
         },
       ],
     },
@@ -72,7 +71,7 @@ export default [
 
 ### Legacy Config (.eslintrc)
 
-If you are still using the legacy configuration format:
+If you are still using the legacy configuration format (ESLint < 9 or `.eslintrc` files):
 
 ```json
 {
@@ -89,9 +88,10 @@ If you are still using the legacy configuration format:
 
 <!-- begin auto-generated configs list -->
 
-|     | Name          |
-| :-- | :------------ |
-| ✅  | `recommended` |
+|     | Name               |
+| :-- | :----------------- |
+|     | `flat/recommended` |
+| ✅  | `recommended`      |
 
 <!-- end auto-generated configs list -->
 
@@ -103,8 +103,8 @@ If you are still using the legacy configuration format:
 ✅ Set in the `recommended` configuration.\
 🔧 Automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/user-guide/command-line-interface#--fix).
 
-| Name                                                       | Description                                                     | 💼  | 🔧  |
-| :--------------------------------------------------------- | :-------------------------------------------------------------- | :-- | :-- |
-| [enforce-barrel-files](docs/rules/enforce-barrel-files.md) | Disallow deep imports from directories that have an index file. | ✅  | 🔧  |
+| Name                                                       | Description                                                     | 💼                             | 🔧  |
+| :--------------------------------------------------------- | :-------------------------------------------------------------- | :----------------------------- | :-- |
+| [enforce-barrel-files](docs/rules/enforce-barrel-files.md) | Disallow deep imports from directories that have an index file. | ✅ ![badge-flat/recommended][] | 🔧  |
 
 <!-- end auto-generated rules list -->

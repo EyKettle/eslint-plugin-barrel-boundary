@@ -1,6 +1,6 @@
 # Disallow deep imports from directories that have an index file (`barrel-boundary/enforce-barrel-files`)
 
-💼 This rule is enabled in the ✅ `recommended` config.
+💼 This rule is enabled in the following configs: `flat/recommended`, ✅ `recommended`.
 
 🔧 This rule is automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/latest/user-guide/command-line-interface#--fix).
 
