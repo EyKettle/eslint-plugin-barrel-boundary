@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-barrel-boundary",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Enforce module boundaries via barrel files.",
   "keywords": [
     "eslint",

@@ -9,13 +9,22 @@ const plugin = {
   rules: {
     "enforce-barrel-files": enforceBarrelFiles,
   },
-  configs: {
-    recommended: {
-      plugins: ["barrel-boundary"],
-      rules: {
-        "barrel-boundary/enforce-barrel-files": "error",
-      },
-    },
+  configs: {} as Record<string, unknown>,
+};
+
+plugin.configs.recommended = {
+  plugins: ["barrel-boundary"],
+  rules: {
+    "barrel-boundary/enforce-barrel-files": "error",
+  },
+};
+
+plugin.configs["flat/recommended"] = {
+  plugins: {
+    "barrel-boundary": plugin,
+  },
+  rules: {
+    "barrel-boundary/enforce-barrel-files": "error",
   },
 };
 
