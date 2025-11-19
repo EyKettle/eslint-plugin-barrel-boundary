@@ -10,11 +10,21 @@
   ],
   "author": "EyKettle",
   "license": "MIT",
+  "homepage": "https://github.com/EyKettle/eslint-plugin-barrel-boundary#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EyKettle/eslint-plugin-barrel-boundary.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EyKettle/eslint-plugin-barrel-boundary/issues"
+  },
   "main": "./lib/index.js",
   "exports": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc",
