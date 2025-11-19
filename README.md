@@ -1,6 +1,31 @@
 # eslint-plugin-barrel-boundary
 
+[![npm version](https://img.shields.io/npm/v/eslint-plugin-barrel-boundary.svg?style=flat-square)](https://www.npmjs.com/package/eslint-plugin-barrel-boundary)
+[![npm downloads](https://img.shields.io/npm/dm/eslint-plugin-barrel-boundary.svg?style=flat-square)](https://www.npmjs.com/package/eslint-plugin-barrel-boundary)
+[![License](https://img.shields.io/npm/l/eslint-plugin-barrel-boundary.svg?style=flat-square)](./LICENSE)
+
 Enforce module boundaries via barrel files.
+
+## Why use this?
+
+Stop "spaghetti imports" and enforce clean module boundaries!
+
+Instead of reaching deep into the internal structure of a directory:
+
+```typescript
+// ❌ Bad: Leaking internal implementation details
+import { SmallConfirm } from "../popup/types/smallConfirm";
+import { usePopup } from "../popup/context";
+```
+
+Enforce importing from the barrel file (`index.ts`) acting as the public API:
+
+```typescript
+// ✅ Good: Clean module boundary
+import { SmallConfirm, usePopup } from "../popup";
+```
+
+This plugin automatically detects if a directory has an `index` file and enforces usage of it, keeping your project structure clean and refactor-friendly.
 
 ## Installation
 
@@ -31,6 +56,7 @@ export default [
 
   // 2. Custom Configuration (Optional)
   // If you need to customize options (e.g., support path aliases like "@/components")
+  // `detectAliases` defaults to `false`.
   {
     rules: {
       "barrel-boundary/enforce-barrel-files": [
@@ -63,8 +89,8 @@ If you are still using the legacy configuration format:
 
 <!-- begin auto-generated configs list -->
 
-|    | Name          |
-| :- | :------------ |
+|     | Name          |
+| :-- | :------------ |
 | ✅  | `recommended` |
 
 <!-- end auto-generated configs list -->
@@ -77,8 +103,8 @@ If you are still using the legacy configuration format:
 ✅ Set in the `recommended` configuration.\
 🔧 Automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/user-guide/command-line-interface#--fix).
 
-| Name                                                       | Description                                                     | 💼 | 🔧 |
-| :--------------------------------------------------------- | :-------------------------------------------------------------- | :- | :- |
-| [enforce-barrel-files](docs/rules/enforce-barrel-files.md) | Disallow deep imports from directories that have an index file. | ✅  | 🔧 |
+| Name                                                       | Description                                                     | 💼  | 🔧  |
+| :--------------------------------------------------------- | :-------------------------------------------------------------- | :-- | :-- |
+| [enforce-barrel-files](docs/rules/enforce-barrel-files.md) | Disallow deep imports from directories that have an index file. | ✅  | 🔧  |
 
 <!-- end auto-generated rules list -->
