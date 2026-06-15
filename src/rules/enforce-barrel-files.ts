@@ -27,24 +27,6 @@ function formatAsRelativePath(from: string, to: string): string {
   return relative.startsWith(".") ? relative : `./${relative}`;
 }
 
-function isBarrelFile(importPath: string): boolean {
-  const importedFilename = path.basename(importPath);
-  if (importedFilename === BARREL_FILE_BASE) return true;
-
-  const ext = path.extname(importedFilename);
-  const base = path.basename(importedFilename, ext);
-
-  return base === BARREL_FILE_BASE && EXTENSIONS.includes(ext);
-}
-
-function isDirectoryWithBarrel(resolvedImportPath: string): boolean {
-  for (const ext of EXTENSIONS) {
-    if (existsSync(path.join(resolvedImportPath, BARREL_FILE_BASE + ext)))
-      return true;
-  }
-  return false;
-}
-
 function isInternalImport(barrelDir: string, currentFileDir: string): boolean {
   const relativePathToBarrel = path.relative(barrelDir, currentFileDir);
   return (
@@ -125,36 +107,59 @@ const rule: Rule.RuleModule = {
     }
 
     const barrelDirCache = new Map<string, string | null>();
+    const barrelPresenceCache = new Map<string, boolean>();
+
+    function isDirectoryWithBarrel(dirPath: string): boolean {
+      const cached = barrelPresenceCache.get(dirPath);
+      if (cached !== undefined) return cached;
+
+      for (const ext of EXTENSIONS) {
+        if (existsSync(path.join(dirPath, BARREL_FILE_BASE + ext))) {
+          barrelPresenceCache.set(dirPath, true);
+          return true;
+        }
+      }
+      barrelPresenceCache.set(dirPath, false);
+      return false;
+    }
 
     function findBarrelDirectory(startDir: string): string | null {
       if (barrelDirCache.has(startDir)) return barrelDirCache.get(startDir)!;
 
       let currentDir = startDir;
+      let nearestBarrel: string | null = null;
+
       while (true) {
         if (!projectRoot || currentDir === projectRoot) break;
-
         const parentDir = path.dirname(currentDir);
         if (parentDir === currentDir) break;
 
-        for (const ext of EXTENSIONS) {
-          const barrelFilePath = path.join(currentDir, BARREL_FILE_BASE + ext);
-          if (existsSync(barrelFilePath)) {
-            barrelDirCache.set(startDir, currentDir);
-            return currentDir;
+        if (isDirectoryWithBarrel(currentDir)) {
+          if (!nearestBarrel) {
+            nearestBarrel = currentDir;
           }
         }
 
-        currentDir = path.dirname(currentDir);
+        currentDir = parentDir;
       }
-      barrelDirCache.set(startDir, null);
-      return null;
+
+      barrelDirCache.set(startDir, nearestBarrel);
+      return nearestBarrel;
+    }
+
+    function importTargetsBarrelEntry(resolvedPath: string): boolean {
+      if (isDirectoryWithBarrel(resolvedPath)) return true;
+      const filename = path.basename(resolvedPath);
+      if (filename === BARREL_FILE_BASE) return true;
+      const ext = path.extname(filename);
+      const base = path.basename(filename, ext);
+      return base === BARREL_FILE_BASE && EXTENSIONS.includes(ext);
     }
 
     return {
       ImportDeclaration(node) {
         const importPath = node.source.value;
         if (typeof importPath !== "string") return;
-        if (isBarrelFile(importPath)) return;
 
         let resolvedImportPath: string | null = null;
 
@@ -167,36 +172,54 @@ const rule: Rule.RuleModule = {
         }
         if (!resolvedImportPath) return;
 
-        if (isDirectoryWithBarrel(resolvedImportPath)) return;
+        const importTargetDir = isDirectoryWithBarrel(resolvedImportPath)
+          ? resolvedImportPath
+          : path.dirname(resolvedImportPath);
 
-        const importedModuleDir = path.dirname(resolvedImportPath);
+        const nearestBarrel = findBarrelDirectory(importTargetDir);
+        if (!nearestBarrel) return;
 
-        const barrelDir = findBarrelDirectory(importedModuleDir);
-
-        if (barrelDir && !isInternalImport(barrelDir, currentFileDir)) {
-          const suggestedPath = calculateSuggestedPath(
-            detectAliases && matcher,
-            currentFileDir,
-            barrelDir,
-            importPath,
-            resolvedImportPath,
-          );
-          context.report({
-            node: node.source,
-            messageId: "noDeepImport",
-            data: {
-              directory: suggestedPath,
-              importPath,
-            },
-            fix(fixer) {
-              const quote = node.source.raw?.startsWith("'") ? "'" : '"';
-              return fixer.replaceText(
-                node.source,
-                `${quote}${suggestedPath}${quote}`,
-              );
-            },
-          });
+        let effectiveBarrel = nearestBarrel;
+        let checkDir = path.dirname(nearestBarrel);
+        while (barrelPresenceCache.get(checkDir) === true) {
+          if (!isInternalImport(checkDir, currentFileDir)) {
+            effectiveBarrel = checkDir;
+            checkDir = path.dirname(checkDir);
+          } else {
+            break;
+          }
         }
+
+        if (isInternalImport(effectiveBarrel, currentFileDir)) return;
+
+        if (
+          importTargetDir === effectiveBarrel &&
+          importTargetsBarrelEntry(resolvedImportPath)
+        )
+          return;
+
+        const suggestedPath = calculateSuggestedPath(
+          detectAliases && matcher,
+          currentFileDir,
+          effectiveBarrel,
+          importPath,
+          resolvedImportPath,
+        );
+        context.report({
+          node: node.source,
+          messageId: "noDeepImport",
+          data: {
+            directory: suggestedPath,
+            importPath,
+          },
+          fix(fixer) {
+            const quote = node.source.raw?.startsWith("'") ? "'" : '"';
+            return fixer.replaceText(
+              node.source,
+              `${quote}${suggestedPath}${quote}`,
+            );
+          },
+        });
       },
     };
   },
