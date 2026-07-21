@@ -11,6 +11,14 @@ import path from "path";
 const EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
 const BARREL_FILE_BASE = "index";
 
+const tsconfigCache = new Map<string, ReturnType<typeof getTsconfig>>();
+function getCachedTsconfig(dir: string): ReturnType<typeof getTsconfig> {
+  if (tsconfigCache.has(dir)) return tsconfigCache.get(dir)!;
+  const result = getTsconfig(dir);
+  tsconfigCache.set(dir, result);
+  return result;
+}
+
 function findProjectRoot(startDir: string): string | null {
   let currentDir = startDir;
   while (true) {
@@ -87,6 +95,9 @@ const rule: Rule.RuleModule = {
           detectAliases: {
             type: "boolean",
           },
+          respectModuleResolution: {
+            type: "boolean",
+          },
         },
         additionalProperties: false,
       },
@@ -99,11 +110,20 @@ const rule: Rule.RuleModule = {
 
     const options = context.options[0] || {};
     const detectAliases = options.detectAliases ?? false;
+    const respectModuleResolution = options.respectModuleResolution ?? true;
 
     let matcher: ((path: string) => string[]) | null = null;
-    if (detectAliases) {
-      const tsconfig = getTsconfig(currentFileDir);
-      if (tsconfig) matcher = createPathsMatcher(tsconfig);
+    let moduleResolution: string | undefined;
+    if (detectAliases || respectModuleResolution) {
+      const tsconfig = getCachedTsconfig(currentFileDir);
+      if (tsconfig) {
+        if (detectAliases) {
+          matcher = createPathsMatcher(tsconfig);
+        }
+        if (respectModuleResolution) {
+          moduleResolution = tsconfig.config.compilerOptions?.moduleResolution as string | undefined;
+        }
+      }
     }
 
     const barrelDirCache = new Map<string, string | null>();
@@ -198,13 +218,19 @@ const rule: Rule.RuleModule = {
         )
           return;
 
-        const suggestedPath = calculateSuggestedPath(
+        let suggestedPath = calculateSuggestedPath(
           detectAliases && matcher,
           currentFileDir,
           effectiveBarrel,
           importPath,
           resolvedImportPath,
         );
+        if (
+          respectModuleResolution &&
+          (moduleResolution === "nodenext" || moduleResolution === "node16")
+        ) {
+          suggestedPath = suggestedPath + "/index.js";
+        }
         context.report({
           node: node.source,
           messageId: "noDeepImport",

@@ -281,3 +281,69 @@ ruleTester.run("enforce-barrel-files (with aliases)", rule, {
     },
   ],
 });
+
+// Test suite for 'nodenext moduleResolution' option
+ruleTester.run("enforce-barrel-files (nodenext moduleResolution)", rule, {
+  valid: [
+    {
+      code: `import { item } from './module'`,
+      filename: fixture("nodenext/src/entry.ts"),
+    },
+    {
+      code: `import { item } from './module/index'`,
+      filename: fixture("nodenext/src/entry.ts"),
+    },
+    {
+      code: `import { item } from './item'`,
+      filename: fixture("nodenext/src/module/index.ts"),
+    },
+  ],
+  invalid: [
+    {
+      code: `import { something } from './module/item'`,
+      filename: fixture("nodenext/src/entry.ts"),
+      output: `import { something } from './module/index.js'`,
+      errors: [{
+        messageId: "noDeepImport",
+        data: { directory: "./module/index.js", importPath: "./module/item" },
+      }],
+    },
+    {
+      code: `import { something } from "./module/item"`,
+      filename: fixture("nodenext/src/entry.ts"),
+      output: `import { something } from "./module/index.js"`,
+      errors: [{ messageId: "noDeepImport" }],
+    },
+    {
+      code: `import { something } from './module/item'`,
+      filename: fixture("nodenext/src/entry.ts"),
+      options: [{ respectModuleResolution: false }],
+      output: `import { something } from './module'`,
+      errors: [{
+        messageId: "noDeepImport",
+        data: { directory: "./module", importPath: "./module/item" },
+      }],
+    },
+  ],
+});
+
+// Test suite for 'node16 moduleResolution' option
+ruleTester.run("enforce-barrel-files (node16 moduleResolution)", rule, {
+  valid: [
+    {
+      code: `import { item } from './module'`,
+      filename: fixture("node16/src/entry.ts"),
+    },
+  ],
+  invalid: [
+    {
+      code: `import { something } from './module/item'`,
+      filename: fixture("node16/src/entry.ts"),
+      output: `import { something } from './module/index.js'`,
+      errors: [{
+        messageId: "noDeepImport",
+        data: { directory: "./module/index.js", importPath: "./module/item" },
+      }],
+    },
+  ],
+});

@@ -62,6 +62,7 @@ export default [
         "error",
         {
           detectAliases: true, // Support for path aliases (e.g., "@/components")
+          // respectModuleResolution: true (default) — appends /index.js for nodenext/node16
         },
       ],
     },
@@ -80,6 +81,7 @@ If you are still using the legacy configuration format (ESLint < 9 or `.eslintrc
   "rules": {
     // Optional: Override defaults
     "barrel-boundary/enforce-barrel-files": ["error", { "detectAliases": true }]
+    // respectModuleResolution (default: true) — appends /index.js for nodenext/node16
   }
 }
 ```
