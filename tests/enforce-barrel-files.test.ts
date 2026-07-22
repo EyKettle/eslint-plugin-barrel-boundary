@@ -7,6 +7,7 @@
 
 import { RuleTester } from "eslint";
 import path from "path";
+import ts from "typescript";
 import rule from "../src/rules/enforce-barrel-files";
 
 const ruleTester = new RuleTester({
@@ -280,4 +281,118 @@ ruleTester.run("enforce-barrel-files (with aliases)", rule, {
       errors: [{ messageId: "noDeepImport" }],
     },
   ],
+});
+
+// ============================================================
+// Nodenext / Node16 moduleResolution tests
+// Auto-fix produces extensioned paths (`./module/index.js`) when
+// the nearest tsconfig.json declares moduleResolution:
+//   "nodenext" or "node16".
+// ============================================================
+
+ruleTester.run("enforce-barrel-files (nodenext moduleResolution)", rule, {
+  valid: [
+    // Barrel directory import: allowed because the target is a barrel
+    {
+      code: `import { item } from './module'`,
+      filename: fixture("nodenext/src/entry.ts"),
+    },
+    // Explicit index import: allowed because it directly specifies the barrel file
+    {
+      code: `import { item } from './module/index'`,
+      filename: fixture("nodenext/src/entry.ts"),
+    },
+    // Internal sibling import: allowed because the importing file is inside the module
+    {
+      code: `import { item } from './item'`,
+      filename: fixture("nodenext/src/module/index.ts"),
+    },
+  ],
+  invalid: [
+    // Deep import: auto-fix appends /index.js for nodenext resolution
+    {
+      code: `import { something } from './module/item'`,
+      filename: fixture("nodenext/src/entry.ts"),
+      output: `import { something } from './module/index.js'`,
+      errors: [{
+        messageId: "noDeepImport",
+        data: { directory: "./module/index.js", importPath: "./module/item" },
+      }],
+    },
+    // Double-quote import: auto-fix preserves the original quote style
+    {
+      code: `import { something } from "./module/item"`,
+      filename: fixture("nodenext/src/entry.ts"),
+      output: `import { something } from "./module/index.js"`,
+      errors: [{ messageId: "noDeepImport" }],
+    },
+    // .js-suffixed deep import: nodenext projects import .ts sources via .js specifiers
+    {
+      code: `import { something } from './module/item.js'`,
+      filename: fixture("nodenext/src/entry.ts"),
+      output: `import { something } from './module/index.js'`,
+      errors: [{
+        messageId: "noDeepImport",
+        data: { directory: "./module/index.js", importPath: "./module/item.js" },
+      }],
+    },
+  ],
+});
+
+ruleTester.run("enforce-barrel-files (node16 moduleResolution)", rule, {
+  valid: [
+    // Barrel directory import: allowed in node16 resolution
+    {
+      code: `import { item } from './module'`,
+      filename: fixture("node16/src/entry.ts"),
+    },
+  ],
+  invalid: [
+    // Deep import: auto-fix appends /index.js for node16 resolution
+    {
+      code: `import { something } from './module/item'`,
+      filename: fixture("node16/src/entry.ts"),
+      output: `import { something } from './module/index.js'`,
+      errors: [{
+        messageId: "noDeepImport",
+        data: { directory: "./module/index.js", importPath: "./module/item" },
+      }],
+    },
+  ],
+});
+
+// ============================================================
+// Fixture tsconfig validity verification
+// Ensures each fixture's tsconfig.json is a valid configuration.
+// ============================================================
+
+describe("Fixture tsconfig validity", () => {
+  const fixturesRoot = path.resolve(__dirname, "fixtures");
+
+  for (const name of ["nodenext", "node16"]) {
+    it(`${name} tsconfig.json is valid`, () => {
+      const tsconfigPath = path.join(fixturesRoot, name, "tsconfig.json");
+
+      const configFile = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
+      if (configFile.error) {
+        throw new Error(
+          ts.flattenDiagnosticMessageText(configFile.error.messageText, "\n"),
+        );
+      }
+
+      const parsedConfig = ts.parseJsonConfigFileContent(
+        configFile.config,
+        ts.sys,
+        path.dirname(tsconfigPath),
+        {},
+        tsconfigPath,
+      );
+      if (parsedConfig.errors && parsedConfig.errors.length > 0) {
+        const messages = parsedConfig.errors
+          .map((d) => ts.flattenDiagnosticMessageText(d.messageText, "\n"))
+          .join("\n\n");
+        throw new Error(`tsconfig.json validation failed:\n${messages}`);
+      }
+    });
+  }
 });
