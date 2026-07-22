@@ -45,7 +45,7 @@ This rule has an object option:
     attempt to resolve paths defined in `tsconfig.json`
     `compilerOptions.paths`.
 
-*   `barrelPattern`: `string` (default: `"/"`) - Customizes the auto-fix
+*   `suggestPattern`: `string` (default: `"/"`) - Customizes the auto-fix
     output path for barrel imports. The value is appended to the barrel
     directory path. When `moduleResolution: "nodenext"` or `"node16"` is
     detected in the nearest `tsconfig.json`, the rule automatically produces
@@ -63,7 +63,7 @@ If you use path aliases (e.g., `@/components/...`), enable this option.
 }
 ```
 
-### barrelPattern
+### suggestPattern
 
 Defines the auto-fix output format for barrel imports. The value is appended
 to the barrel directory path.
@@ -72,14 +72,14 @@ Default: `"/"` — uses the directory path as-is (e.g. `./module`).
 
 When the nearest `tsconfig.json` declares `moduleResolution: "nodenext"` or
 `"node16"`, the rule automatically produces extensioned paths
-(`./module/index.js`). Setting `barrelPattern` does not override this
+(`./module/index.js`). Setting `suggestPattern` does not override this
 automatic behavior — it only takes effect when automatic detection does
 not apply.
 
 ```json
 {
   "rules": {
-    "barrel-boundary/enforce-barrel-files": ["error", { "barrelPattern": "/index" }]
+    "barrel-boundary/enforce-barrel-files": ["error", { "suggestPattern": "/index" }]
   }
 }
 ```

@@ -53,7 +53,7 @@ function calculateSuggestedPath(
   importPath: string,
   resolvedImportPath: string,
   moduleResolution?: string,
-  barrelPattern?: string,
+  suggestPattern?: string,
 ): string {
   let suggestedPath: string;
   if (detectAliases) {
@@ -73,8 +73,8 @@ function calculateSuggestedPath(
     return suggestedPath + "/index.js";
   }
 
-  if (barrelPattern && barrelPattern !== "/") {
-    return suggestedPath + barrelPattern;
+  if (suggestPattern && suggestPattern !== "/") {
+    return suggestedPath + suggestPattern;
   }
 
   return suggestedPath;
@@ -101,7 +101,7 @@ const rule: Rule.RuleModule = {
           detectAliases: {
             type: "boolean",
           },
-          barrelPattern: {
+          suggestPattern: {
             type: "string",
           },
         },
@@ -116,7 +116,7 @@ const rule: Rule.RuleModule = {
 
     const options = context.options[0] || {};
     const detectAliases = options.detectAliases ?? false;
-    const userBarrelPattern = options.barrelPattern;
+    const userSuggestPattern = options.suggestPattern;
 
     let matcher: ((path: string) => string[]) | null = null;
     let moduleResolution: string | undefined;
@@ -225,7 +225,7 @@ const rule: Rule.RuleModule = {
           importPath,
           resolvedImportPath,
           moduleResolution,
-          userBarrelPattern,
+          userSuggestPattern,
         );
         context.report({
           node: node.source,

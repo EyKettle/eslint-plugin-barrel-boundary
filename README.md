@@ -67,7 +67,7 @@ export default [
         "error",
         {
           detectAliases: true, // Support for path aliases (e.g., "@/components")
-          barrelPattern: "/index*", // Custom barrel path pattern (default: "/")
+          suggestPattern: "/index*", // Custom barrel path pattern (default: "/")
         },
       ],
     },
@@ -89,7 +89,7 @@ If you are still using the legacy configuration format (ESLint < 9 or `.eslintrc
       "error",
       {
         "detectAliases": true,
-        "barrelPattern": "/index*"
+        "suggestPattern": "/index*"
       }
     ]
   }

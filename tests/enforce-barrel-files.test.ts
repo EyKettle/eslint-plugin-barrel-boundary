@@ -336,11 +336,11 @@ ruleTester.run("enforce-barrel-files (nodenext moduleResolution)", rule, {
         data: { directory: "./module/index.js", importPath: "./module/item.js" },
       }],
     },
-    // nodenext auto-detection takes priority over user-set barrelPattern
+    // nodenext auto-detection takes priority over user-set suggestPattern
     {
       code: `import { something } from './module/item'`,
       filename: fixture("nodenext/src/entry.ts"),
-      options: [{ barrelPattern: "/index" }],
+      options: [{ suggestPattern: "/index" }],
       output: `import { something } from './module/index.js'`,
       errors: [{
         messageId: "noDeepImport",
