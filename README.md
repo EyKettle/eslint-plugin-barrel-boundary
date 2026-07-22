@@ -4,6 +4,8 @@
 [![npm downloads](https://img.shields.io/npm/dm/eslint-plugin-barrel-boundary.svg?style=flat-square)](https://www.npmjs.com/package/eslint-plugin-barrel-boundary)
 [![License](https://img.shields.io/npm/l/eslint-plugin-barrel-boundary.svg?style=flat-square)](./LICENSE)
 
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+
 Enforce module boundaries via barrel files.
 
 ## Why use this?
