@@ -6,7 +6,10 @@
 
 <!-- end auto-generated rule header -->
 
-Ensures that modules with a barrel file (e.g., `index.ts`) are imported via the barrel file, enforcing strict module boundaries. This prevents "deep imports" which can lead to tight coupling and leaking of internal implementation details.
+Ensures that modules with a barrel file (e.g., `index.ts`) are imported via
+the barrel file, enforcing strict module boundaries. This prevents "deep
+imports" which can lead to tight coupling and leaking of internal
+implementation details.
 
 ## Rule Details
 
@@ -38,7 +41,15 @@ import { item } from './module/index'; // Correct: Explicit index import
 
 This rule has an object option:
 
-*   `detectAliases`: `boolean` (default: `false`) - If `true`, the rule will attempt to resolve paths defined in `tsconfig.json` `compilerOptions.paths`.
+*   `detectAliases`: `boolean` (default: `false`) - If `true`, the rule will
+    attempt to resolve paths defined in `tsconfig.json`
+    `compilerOptions.paths`.
+
+*   `barrelPattern`: `string` (default: `"/"`) - Customizes the auto-fix
+    output path for barrel imports. The value is appended to the barrel
+    directory path. When `moduleResolution: "nodenext"` or `"node16"` is
+    detected in the nearest `tsconfig.json`, the rule automatically produces
+    extensioned paths (`./module/index.js`) regardless of this setting.
 
 ### detectAliases
 
@@ -52,6 +63,29 @@ If you use path aliases (e.g., `@/components/...`), enable this option.
 }
 ```
 
+### barrelPattern
+
+Defines the auto-fix output format for barrel imports. The value is appended
+to the barrel directory path.
+
+Default: `"/"` — uses the directory path as-is (e.g. `./module`).
+
+When the nearest `tsconfig.json` declares `moduleResolution: "nodenext"` or
+`"node16"`, the rule automatically produces extensioned paths
+(`./module/index.js`). Setting `barrelPattern` does not override this
+automatic behavior — it only takes effect when automatic detection does
+not apply.
+
+```json
+{
+  "rules": {
+    "barrel-boundary/enforce-barrel-files": ["error", { "barrelPattern": "/index" }]
+  }
+}
+```
+
 ## When Not To Use It
 
-If your project does not use the "barrel file" pattern (exporting modules via `index.ts`), or if you intentionally allow deep linking into modules everywhere, you can disable this rule.
+If your project does not use the "barrel file" pattern (exporting modules via
+`index.ts` or `index.js`), or if you intentionally allow deep linking into
+modules everywhere, you can disable this rule.

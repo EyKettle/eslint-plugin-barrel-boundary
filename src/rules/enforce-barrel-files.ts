@@ -52,18 +52,32 @@ function calculateSuggestedPath(
   barrelDir: string,
   importPath: string,
   resolvedImportPath: string,
+  moduleResolution?: string,
+  barrelPattern?: string,
 ): string {
+  let suggestedPath: string;
   if (detectAliases) {
     const relativePath = path.relative(resolvedImportPath, barrelDir);
     const segmentsUp = relativePath
       .split(path.sep)
       .filter((s) => s === "..").length;
-    let suggestedPath = importPath;
+    suggestedPath = importPath;
     for (let i = 0; i < segmentsUp; i++) {
       suggestedPath = path.posix.dirname(suggestedPath);
     }
-    return suggestedPath;
-  } else return formatAsRelativePath(currentFileDir, barrelDir);
+  } else {
+    suggestedPath = formatAsRelativePath(currentFileDir, barrelDir);
+  }
+
+  if (moduleResolution === "nodenext" || moduleResolution === "node16") {
+    return suggestedPath + "/index.js";
+  }
+
+  if (barrelPattern && barrelPattern !== "/") {
+    return suggestedPath + barrelPattern;
+  }
+
+  return suggestedPath;
 }
 
 const rule: Rule.RuleModule = {
@@ -87,6 +101,9 @@ const rule: Rule.RuleModule = {
           detectAliases: {
             type: "boolean",
           },
+          barrelPattern: {
+            type: "string",
+          },
         },
         additionalProperties: false,
       },
@@ -99,11 +116,14 @@ const rule: Rule.RuleModule = {
 
     const options = context.options[0] || {};
     const detectAliases = options.detectAliases ?? false;
+    const userBarrelPattern = options.barrelPattern;
 
     let matcher: ((path: string) => string[]) | null = null;
-    if (detectAliases) {
-      const tsconfig = getTsconfig(currentFileDir);
-      if (tsconfig) matcher = createPathsMatcher(tsconfig);
+    let moduleResolution: string | undefined;
+    const tsconfig = getTsconfig(currentFileDir);
+    if (tsconfig) {
+      moduleResolution = tsconfig.config.compilerOptions?.moduleResolution as string | undefined;
+      if (detectAliases) matcher = createPathsMatcher(tsconfig);
     }
 
     const barrelDirCache = new Map<string, string | null>();
@@ -204,6 +224,8 @@ const rule: Rule.RuleModule = {
           effectiveBarrel,
           importPath,
           resolvedImportPath,
+          moduleResolution,
+          userBarrelPattern,
         );
         context.report({
           node: node.source,
